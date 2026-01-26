@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:payment_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+# Razorpay Configuration
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID:your_key_id}
+  key-secret: ${RAZORPAY_KEY_SECRET:your_key_secret}
+
+server:
+  port: 8083
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    root: INFO
+    com.payment: DEBUG
+    org.springframework: DEBUG
+    org.springframework.boot: DEBUG
+    org.springframework.web: DEBUG

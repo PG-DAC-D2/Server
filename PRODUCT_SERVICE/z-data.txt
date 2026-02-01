@@ -1,0 +1,44 @@
+product ->
+{
+  "name": "HP Pavilion Laptop",
+  "rate": 58999,
+  "description": "15.6-inch laptop with Intel i5 processor and 16GB RAM.",
+  "tags": ["electronics", "laptop", "hp"],
+  "discount": 10,
+  "stockQuantity": 15,
+  "imageUrl": ["https://images.unsplash.com/photo-1663354027456-ce6a7e07d212?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1074"],
+  "reviews": [
+    {
+      "customerId": "c101",
+      "rating": 5,
+      "comment": "Great performance!"
+    }
+  ]
+}
+
+
+cart ->
+{
+  "customerId": "c102",
+  "items": [
+    {
+      "productId": "673b25e1e8b2a6a1b67e2345",
+      "quantity": 1
+    },
+    {
+      "productId": "673b25e1e8b2a6a1b67e6789",
+      "quantity": 3
+    }
+  ]
+}
+
+
+wishlist ->
+{
+  "customerId": "c102",
+  "products": [
+    "673b25e1e8b2a6a1b67e2345",
+    "673b25e1e8b2a6a1b67e6789",
+    "673b25e1e8b2a6a1b67e9999"
+  ]
+}

@@ -1,65 +1,61 @@
 package com.notification.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 public class EmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-    @Autowired(required = false)
+    @Autowired
     private JavaMailSender mailSender;
 
-    public boolean sendEmail(String recipientEmail, String subject, String message) {
-        try {
-            if (mailSender == null) {
-                logger.warn("JavaMailSender not configured. Simulating email send to: {}", recipientEmail);
-                logger.info("Subject: {}", subject);
-                logger.info("Message: {}", message);
-                return true;
-            }
+    @Value("${spring.mail.username}")
+    private String senderEmail;
 
+    public boolean sendEmail(String recipientEmail, String subject, String messageBody) {
+        try {
+            logger.info("Attempting to send email to: {}", recipientEmail);
+            
             SimpleMailMessage email = new SimpleMailMessage();
+            email.setFrom(senderEmail);
             email.setTo(recipientEmail);
             email.setSubject(subject);
-            email.setText(message);
-            email.setFrom("noreply@ecommerce.com");
+            email.setText(messageBody);
 
             mailSender.send(email);
+            
             logger.info("Email sent successfully to: {}", recipientEmail);
             return true;
+
         } catch (Exception e) {
-            logger.error("Failed to send email to: {}", recipientEmail, e);
+            // Log the FULL stack trace so you can see if it is authentication or network
+            logger.error("CRITICAL: Failed to send email to {}", recipientEmail, e);
             return false;
         }
     }
 
     public boolean sendPaymentSuccessEmail(String recipientEmail, String userName, 
                                            Long orderId, Double amount, String currency) {
-        String subject = "Payment Successful - Order #" + orderId;
-        String message = "Dear " + userName + ",\n\n" +
-                        "Your payment of " + amount + " " + currency + " has been processed successfully.\n" +
+        String subject = "Order Confirmation #" + orderId;
+        String message = "Hi " + userName + ",\n\n" +
+                        "Your payment of " + amount + " " + currency + " was successful.\n" +
                         "Order ID: " + orderId + "\n\n" +
-                        "Thank you for your purchase!\n\n" +
-                        "Best regards,\n" +
-                        "E-commerce Team";
-
+                        "Thanks for shopping with us!";
         return sendEmail(recipientEmail, subject, message);
     }
 
     public boolean sendPaymentFailureEmail(String recipientEmail, String userName, Long orderId) {
-        String subject = "Payment Failed - Order #" + orderId;
-        String message = "Dear " + userName + ",\n\n" +
-                        "Unfortunately, your payment for Order #" + orderId + " could not be processed.\n" +
-                        "Please try again or contact support for assistance.\n\n" +
-                        "Best regards,\n" +
-                        "E-commerce Team";
-
+        String subject = "Payment Issue - Order #" + orderId;
+        String message = "Hi " + userName + ",\n\n" +
+                        "Your payment for Order #" + orderId + " failed.\n" +
+                        "Please check your payment method and try again.";
         return sendEmail(recipientEmail, subject, message);
     }
 }

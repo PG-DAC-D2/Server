@@ -1,6 +1,8 @@
 ## Build results
 bin/
 obj/
+target/
+*.jar
 
 ## Visual Studio
 .vs/
@@ -15,12 +17,26 @@ obj/
 
 ## Logs
 *.log
+*.err
 
 ## OS
 .DS_Store
 Thumbs.db
 
-## Environment files
+## Environment files - DO NOT COMMIT
+.env
+.env.local
 appsettings.Development.json
 appsettings.Production.json
 /.metadata/
+
+## IDE files
+*.iml
+*.class
+*.classpath
+.project
+
+## Runtime files
+response.json
+notification.err
+payment.err

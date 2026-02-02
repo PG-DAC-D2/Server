@@ -14,7 +14,7 @@ public class PaymentEventProducer {
     private static final String TOPIC = "payment-events";
 
     @Autowired(required = false)
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, PaymentEventDTO> kafkaTemplate;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -26,8 +26,7 @@ public class PaymentEventProducer {
                 return;
             }
 
-            String message = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(TOPIC, message);
+            kafkaTemplate.send(TOPIC, event);
             logger.info("Published PAYMENT_SUCCESS event for order: {}", event.getOrderId());
 
         } catch (Exception e) {
@@ -42,8 +41,7 @@ public class PaymentEventProducer {
                 return;
             }
 
-            String message = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(TOPIC, message);
+            kafkaTemplate.send(TOPIC, event);
             logger.info("Published PAYMENT_FAILED event for order: {}", event.getOrderId());
 
         } catch (Exception e) {

@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="CartService/CartService.csproj" />
-  <Project Path="OrderService/OrderService.csproj" Id="36cf7ed4-7c6b-4844-b5de-422810174255" />
+  <Project Path="CART_SERVICE/CartService.csproj" />
+  <Project Path="ORDER_SERVICE/OrderService.csproj" Id="36cf7ed4-7c6b-4844-b5de-422810174255" />
 </Solution>

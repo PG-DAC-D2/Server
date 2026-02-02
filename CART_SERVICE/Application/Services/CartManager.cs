@@ -14,20 +14,28 @@ public class CartManager
     }
 
     public async Task<ShoppingCart> GetOrCreateCartAsync(string userId)
+{
+    var cart = await _db.Carts
+        .Include(c => c.Items)
+        .FirstOrDefaultAsync(c => c.UserId == userId);
+
+    if (cart == null)
     {
-        var cart = await _db.Carts
-            .Include(c => c.Items)
-            .FirstOrDefaultAsync(c => c.UserId == userId);
-
-        if (cart == null)
+        cart = new ShoppingCart
         {
-            cart = new ShoppingCart { UserId = userId };
-            _db.Carts.Add(cart);
-            await _db.SaveChangesAsync();
-        }
+            CartId = Guid.NewGuid(),
+            UserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            Items = new List<CartItem>()
+        };
 
-        return cart;
+        _db.Carts.Add(cart);
+        await _db.SaveChangesAsync();
     }
+
+    return cart;
+}
+
 
     public async Task<ShoppingCart> GetCartAsync(string userId)
     {
@@ -42,24 +50,27 @@ public class CartManager
     }
 
     public async Task AddItemAsync(string userId, CartItem item)
+{
+    var cart = await GetOrCreateCartAsync(userId);
+
+    var existingItem = await _db.CartItems
+        .FirstOrDefaultAsync(i =>
+            i.CartId == cart.CartId &&
+            i.ProductId == item.ProductId);
+
+    if (existingItem != null)
     {
-        var cart = await GetOrCreateCartAsync(userId);
-
-        var existing = cart.Items
-            .FirstOrDefault(i => i.ProductId == item.ProductId);
-
-        if (existing != null)
-        {
-            existing.Quantity += item.Quantity;
-        }
-        else
-        {
-            item.CartId = cart.CartId;
-            _db.CartItems.Add(item);
-        }
-
-        await _db.SaveChangesAsync();
+        existingItem.Quantity += item.Quantity;
     }
+    else
+    {
+        item.CartId = cart.CartId;
+        await _db.CartItems.AddAsync(item);
+    }
+
+    await _db.SaveChangesAsync();
+}
+
 
     public async Task UpdateQuantityAsync(string userId, Guid cartItemId, int quantity)
     {

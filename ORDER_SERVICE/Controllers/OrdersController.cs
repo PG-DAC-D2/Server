@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace OrderService.Controllers;
 
 [ApiController]
-[Route("api/orders")]
+[Route("orders")]
 public class OrdersController : ControllerBase
 {
     private readonly OrderManager _orderManager;

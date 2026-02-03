@@ -51,14 +51,14 @@ spring:
           predicates:
             - Path=/api/orders/**
           filters:
-            - AuthenticationFilter
+            # - AuthenticationFilter
             - StripPrefix=1
 
         # ✅ PRODUCT SERVICE (Node.js)
         - id: product-service
           uri: http://localhost:5000
           predicates:
-            - Path=/api/products/**,/api/wishlist/**
+            - Path=/api/products/**,/api/wishlist/**,/api/addresses/**
           filters:
             - StripPrefix=1
             # - AuthenticationFilter   # Uncomment if authentication required

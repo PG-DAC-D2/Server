@@ -65,4 +65,18 @@ public class OrdersController : ControllerBase
 
         return Ok(orders);
     }
+
+    [HttpPost("{orderId:guid}/confirm-payment")]
+    public async Task<IActionResult> ConfirmPayment(Guid orderId)
+    {
+        var order = await _db.Orders.FindAsync(orderId);
+        if (order == null)
+            return NotFound();
+
+        order.Status = "Paid";
+        order.PaymentReference = "PAY-" + Guid.NewGuid().ToString();
+        await _db.SaveChangesAsync();
+
+        return Ok(new { orderId = order.OrderId, status = order.Status });
+    }
 }

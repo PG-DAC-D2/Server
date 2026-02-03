@@ -3,7 +3,7 @@ spring:
     name: payment-service
 
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:payment_db}
+    url: jdbc:mysql://localhost:3307/payment_db?createDatabaseIfNotExist=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:Sahil@2003}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -28,12 +28,12 @@ spring:
 
 # Razorpay Configuration
 razorpay:
-  key-id: ${RAZORPAY_KEY_ID}
-  key-secret: ${RAZORPAY_KEY_SECRET}
+  key-id: rzp_test_SAoyRXGgKmMxkB
+  key-secret: 9hfqd1ZsRdEnxHajARvZ5d5z
 
-# Stripe Configuration
+# Stripe Configuration (Optional)
 stripe:
-  api-key: ${STRIPE_API_KEY}
+  api-key: ${STRIPE_API_KEY:sk_test_dummy}
 
 server:
   port: 8083

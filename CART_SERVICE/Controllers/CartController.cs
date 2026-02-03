@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Claims;
 
 namespace CartService.Controllers;
+
 [ApiController]
 [Route("cart")]
 public class CartController : ControllerBase
@@ -22,54 +23,54 @@ public class CartController : ControllerBase
     {
         try
         {
-            // Prefer the authenticated principal if available
+            // 1. PRIORITY: Check the custom header injected by the API Gateway
+            if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+                !string.IsNullOrWhiteSpace(userIdHeader))
+            {
+                return userIdHeader.ToString();
+            }
+
+            // 2. FALLBACK: Check authenticated principal (if UseAuthentication/UseAuthorization is active)
             var user = HttpContext?.User;
             if (user?.Identity != null && user.Identity.IsAuthenticated)
             {
                 var userId = user.FindFirst("user_id")?.Value
                              ?? user.FindFirst("sub")?.Value
-                             ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                             ?? user.FindFirst("nameid")?.Value;
+                             ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!string.IsNullOrEmpty(userId))
                     return userId;
             }
 
-            // Fallback: parse Authorization header JWT token (without signature validation)
+            // 3. FINAL FALLBACK: Manual JWT parse from Authorization header
             if (Request.Headers.TryGetValue("Authorization", out var authHeader) &&
                 !string.IsNullOrWhiteSpace(authHeader))
             {
                 var token = authHeader.ToString().Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase).Trim();
-                if (!string.IsNullOrEmpty(token))
+                var jwtHandler = new JwtSecurityTokenHandler();
+                if (jwtHandler.CanReadToken(token))
                 {
-                    var jwtHandler = new JwtSecurityTokenHandler();
-                    if (jwtHandler.CanReadToken(token))
-                    {
-                        var jwtToken = jwtHandler.ReadJwtToken(token);
-                        var userId = jwtToken.Claims.FirstOrDefault(claim =>
-                                       claim.Type == "user_id" ||
-                                       claim.Type == "sub" ||
-                                       claim.Type == ClaimTypes.NameIdentifier ||
-                                       claim.Type == "nameid")?.Value;
-                        if (!string.IsNullOrEmpty(userId))
-                            return userId;
-                    }
+                    var jwtToken = jwtHandler.ReadJwtToken(token);
+                    return jwtToken.Claims.FirstOrDefault(c => 
+                        c.Type == "user_id" || 
+                        c.Type == "sub" || 
+                        c.Type == "nameid")?.Value;
                 }
             }
         }
         catch
         {
-            // Ignore and return null for unauthenticated
+            // Fail silently and return null for unauthenticated status
         }
 
         return null;
-    }
+    } 
 
     [HttpGet]
     public async Task<IActionResult> GetCart()
     {
-        var userId = GetUserId();
+        var userId = Request.Headers["X-User-Id"].FirstOrDefault();
         if (userId == null)
-            return Unauthorized();
+            return Unauthorized(new { message = "User identification missing." });
 
         var cart = await _cartManager.GetOrCreateCartAsync(userId);
         return Ok(cart);
@@ -80,7 +81,7 @@ public class CartController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized();
+            return Unauthorized(new { message = "User identification missing." });
 
         var item = new CartItem
         {
@@ -91,7 +92,7 @@ public class CartController : ControllerBase
         };
 
         await _cartManager.AddItemAsync(userId, item);
-        return Ok();
+        return Ok(new { message = "Item added to cart." });
     }
 
     [HttpPut("items/{cartItemId:guid}")]

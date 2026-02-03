@@ -49,7 +49,8 @@ public class CartManager
         return cart;
     }
 
-    public async Task AddItemAsync(string userId, CartItem item)
+    // CartManager.cs
+public async Task<ShoppingCart> AddItemAsync(string userId, CartItem item)
 {
     var cart = await GetOrCreateCartAsync(userId);
 
@@ -65,10 +66,15 @@ public class CartManager
     else
     {
         item.CartId = cart.CartId;
+        // Ensure the ID is generated if not handled by DB identity
+        if (item.CartItemId == Guid.Empty) item.CartItemId = Guid.NewGuid(); 
         await _db.CartItems.AddAsync(item);
     }
 
     await _db.SaveChangesAsync();
+    
+    // Return the full cart with the new database-generated IDs
+    return await GetOrCreateCartAsync(userId); 
 }
 
 

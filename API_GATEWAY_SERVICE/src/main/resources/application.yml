@@ -45,6 +45,23 @@ spring:
           filters:
             - StripPrefix=1
 
+        # Lightweight health endpoints (no AuthenticationFilter) - allow gateway health checks
+        - id: payment-health
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/payments/health
+          filters:
+            # Rewrite incoming gateway path to the service actuator path
+            - RewritePath=/api/payments/health,/actuator/health
+
+        - id: notification-health
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/notifications/health
+          filters:
+            # Rewrite incoming gateway path to the service actuator path
+            - RewritePath=/api/notifications/health,/actuator/health
+
         # ✅ ORDER SERVICE (.NET)
         - id: order-service
           uri: http://localhost:5024

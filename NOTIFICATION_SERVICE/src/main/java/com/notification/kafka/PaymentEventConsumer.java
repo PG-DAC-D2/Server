@@ -30,7 +30,7 @@ public class PaymentEventConsumer {
     private ObjectMapper objectMapper;
 
     @KafkaListener(topics = "payment-events", groupId = "notification-service", 
-                   autoStartup = "false")
+                   autoStartup = "true")
     public void consumePaymentEvent(String message) {
         try {
             logger.info("Received payment event: {}", message);

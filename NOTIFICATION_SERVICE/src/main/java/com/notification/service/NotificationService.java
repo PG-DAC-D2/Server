@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -34,31 +35,34 @@ public class NotificationService {
         notification.setNotificationType(request.getNotificationType());
         notification.setStatus("PENDING");
 
-        // Save to database first
+        // 1. Save initial PENDING state
         Notification savedNotification = notificationRepository.save(notification);
 
-        // Send notification based on type
         boolean sent = false;
-        if ("EMAIL".equalsIgnoreCase(request.getNotificationType())) {
-            sent = emailService.sendEmail(
-                    request.getRecipientEmail(),
-                    request.getSubject(),
-                    request.getMessage()
-            );
-        } else if ("SMS".equalsIgnoreCase(request.getNotificationType())) {
-            // Use actual Twilio SMS service
-            sent = smsService.sendSms(request.getPhoneNumber(), request.getMessage());
+        try {
+            if ("EMAIL".equalsIgnoreCase(request.getNotificationType())) {
+                sent = emailService.sendEmail(
+                        request.getRecipientEmail(),
+                        request.getSubject(),
+                        request.getMessage()
+                );
+            } else if ("SMS".equalsIgnoreCase(request.getNotificationType())) {
+                if (request.getPhoneNumber() == null || request.getPhoneNumber().isEmpty()) {
+                    logger.error("Cannot send SMS: Phone number is missing");
+                    sent = false;
+                } else {
+                    sent = smsService.sendSms(request.getPhoneNumber(), request.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Unexpected error during notification send", e);
+            sent = false;
         }
 
-        // Update status
-        if (sent) {
-            savedNotification.setStatus("SENT");
-            logger.info("Notification sent for order: {}", request.getOrderId());
-        } else {
-            savedNotification.setStatus("FAILED");
-            logger.error("Failed to send notification for order: {}", request.getOrderId());
-        }
-
+        // 2. Update status based on result
+        savedNotification.setStatus(sent ? "SENT" : "FAILED");
+        savedNotification.setSentAt(sent ? LocalDateTime.now() : null);
+        
         return notificationRepository.save(savedNotification);
     }
 

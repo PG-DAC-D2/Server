@@ -4,16 +4,25 @@ import com.payment.dto.PaymentRequest;
 import com.payment.dto.PaymentResponse;
 import com.payment.entity.Payment;
 import com.payment.repository.PaymentRepository;
+import com.payment.kafka.PaymentEventDTO;
+import com.payment.kafka.PaymentEventProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
 @Service
 public class PaymentService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
+
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired(required = false)
+    private PaymentEventProducer eventProducer;
 
     public PaymentResponse processPayment(PaymentRequest request) {
         // Generate unique payment ID
@@ -30,6 +39,29 @@ public class PaymentService {
 
         // Save to database
         Payment savedPayment = paymentRepository.save(payment);
+
+        // Publish success event with customer data
+        if (eventProducer != null) {
+            PaymentEventDTO event = new PaymentEventDTO();
+            event.setEventType("PAYMENT_SUCCESS");
+            event.setOrderId(savedPayment.getOrderId());
+            // Use the String paymentId directly to avoid fragile parsing logic
+            event.setPaymentId(savedPayment.getPaymentId());
+            event.setAmount(savedPayment.getAmount());
+            event.setCurrency(savedPayment.getCurrency());
+            event.setPaymentMethod(savedPayment.getPaymentMethod());
+            event.setUserEmail(request.getUserEmail());
+            event.setUserName(request.getUserName());
+            event.setPhoneNumber(request.getPhoneNumber());
+            event.setTimestamp(System.currentTimeMillis());
+
+            logger.info("Publishing payment success event for order: {} with email: {} and phone: {}", 
+                       event.getOrderId(), event.getUserEmail(), event.getPhoneNumber());
+            
+            eventProducer.publishPaymentSuccessEvent(event);
+        } else {
+            logger.warn("Kafka Producer is null. Event was NOT sent.");
+        }
 
         // Return response
         return new PaymentResponse(

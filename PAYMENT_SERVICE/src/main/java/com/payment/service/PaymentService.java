@@ -21,7 +21,7 @@ public class PaymentService {
     @Autowired
     private PaymentRepository paymentRepository;
 
-    @Autowired(required = false)
+    @Autowired
     private PaymentEventProducer eventProducer;
 
     public PaymentResponse processPayment(PaymentRequest request) {
@@ -41,26 +41,28 @@ public class PaymentService {
         Payment savedPayment = paymentRepository.save(payment);
 
         // Publish success event with customer data
-        if (eventProducer != null) {
-            PaymentEventDTO event = new PaymentEventDTO();
-            event.setEventType("PAYMENT_SUCCESS");
-            event.setOrderId(savedPayment.getOrderId());
-            // Use the String paymentId directly to avoid fragile parsing logic
-            event.setPaymentId(savedPayment.getPaymentId());
-            event.setAmount(savedPayment.getAmount());
-            event.setCurrency(savedPayment.getCurrency());
-            event.setPaymentMethod(savedPayment.getPaymentMethod());
-            event.setUserEmail(request.getUserEmail());
-            event.setUserName(request.getUserName());
-            event.setPhoneNumber(request.getPhoneNumber());
-            event.setTimestamp(System.currentTimeMillis());
+        PaymentEventDTO event = new PaymentEventDTO();
+        event.setEventType("PAYMENT_SUCCESS");
+        event.setOrderId(savedPayment.getOrderId());
+        // Use the String paymentId directly to avoid fragile parsing logic
+        event.setPaymentId(savedPayment.getPaymentId());
+        event.setAmount(savedPayment.getAmount());
+        event.setCurrency(savedPayment.getCurrency());
+        event.setPaymentMethod(savedPayment.getPaymentMethod());
+        event.setUserEmail(request.getUserEmail());
+        event.setUserName(request.getUserName());
+        event.setPhoneNumber(request.getPhoneNumber());
+        event.setTimestamp(System.currentTimeMillis());
 
-            logger.info("Publishing payment success event for order: {} with email: {} and phone: {}", 
-                       event.getOrderId(), event.getUserEmail(), event.getPhoneNumber());
-            
+        logger.info("Publishing payment success event for order: {} with email: {} and phone: {}", 
+                   event.getOrderId(), event.getUserEmail(), event.getPhoneNumber());
+        
+        try {
             eventProducer.publishPaymentSuccessEvent(event);
-        } else {
-            logger.warn("Kafka Producer is null. Event was NOT sent.");
+        } catch (Exception e) {
+            // Log the error but don't crash the response
+            logger.error("Failed to publish Kafka event for order {}: {}", 
+                        savedPayment.getOrderId(), e.getMessage(), e);
         }
 
         // Return response

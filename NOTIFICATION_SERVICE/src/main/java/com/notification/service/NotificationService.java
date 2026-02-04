@@ -51,7 +51,19 @@ public class NotificationService {
                     logger.error("Cannot send SMS: Phone number is missing");
                     sent = false;
                 } else {
-                    sent = smsService.sendSms(request.getPhoneNumber(), request.getMessage());
+                    // ✅ FORMAT PHONE NUMBER FOR TWILIO (E.164 format required)
+                    String phoneNumber = request.getPhoneNumber().trim();
+                    
+                    // Remove any spaces, dashes, or parentheses
+                    phoneNumber = phoneNumber.replaceAll("[\\s\\-()]+", "");
+                    
+                    // Add +91 country code if not present (for Indian numbers)
+                    if (!phoneNumber.startsWith("+")) {
+                        phoneNumber = "+91" + phoneNumber;
+                    }
+                    
+                    logger.info("Formatted phone for SMS: {} → {}", request.getPhoneNumber(), phoneNumber);
+                    sent = smsService.sendSms(phoneNumber, request.getMessage());
                 }
             }
         } catch (Exception e) {

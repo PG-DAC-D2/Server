@@ -1,5 +1,8 @@
 package com.payment.service;
 
+import com.razorpay.RazorpayClient;
+import com.razorpay.Order;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -19,44 +22,66 @@ public class RazorpayPaymentService {
     @Value("${razorpay.key-secret:}")
     private String keySecret;
 
+    // ✅ FIX: Use official Razorpay API client to create orders
     public String createPaymentOrder(Long orderId, Double amount, String currency, String email, String phoneNumber) {
         try {
             if (keyId == null || keyId.isEmpty() || keySecret == null || keySecret.isEmpty()) {
-                logger.warn("Razorpay credentials not configured. Generating test order");
-                return "ORD_" + orderId + "_TEST";
+                logger.warn("⚠️ Razorpay credentials not configured");
+                throw new RuntimeException("Razorpay credentials missing. Configure razorpay.key-id and razorpay.key-secret");
             }
 
-            // Create order using Razorpay API
-            // Note: Requires OkHttp3 or similar HTTP client
-            // For now, simulating order creation
+            // ✅ Create Razorpay client with official SDK
+            RazorpayClient client = new RazorpayClient(keyId, keySecret);
+
+            // ✅ Prepare order options (OFFICIAL RAZORPAY FORMAT)
+            JSONObject options = new JSONObject();
+            options.put("amount", (long)(amount * 100));    // Convert to paise (₹5000 = 500000 paise)
+            options.put("currency", currency);              // INR
+            options.put("receipt", "order_" + orderId);     // Your order reference
+            options.put("description", "Payment for order #" + orderId);
+
+            // ✅ Call official Razorpay API to create order
+            Order razorpayOrder = client.orders.create(options);
+
+            // ✅ Extract Razorpay order ID from response (e.g., order_K123abc4xyz)
+            String razorpayOrderId = razorpayOrder.get("id").toString();
             
-            String orderId_razorpay = "order_" + System.currentTimeMillis();
-            logger.info("Razorpay Order created: {} for Order: {}", orderId_razorpay, orderId);
-            return orderId_razorpay;
+            logger.info("✅ Official Razorpay Order created: {} for order #{} (amount: {} {})", 
+                       razorpayOrderId, orderId, amount, currency);
+            
+            return razorpayOrderId;
 
         } catch (Exception e) {
-            logger.error("Razorpay error for Order {}: {}", orderId, e.getMessage());
-            return null;
+            logger.error("❌ Failed to create Razorpay order for {}: {}", orderId, e.getMessage(), e);
+            throw new RuntimeException("Failed to create payment order: " + e.getMessage(), e);
         }
     }
 
+    // ✅ OFFICIAL VERIFICATION: HMAC-SHA256(order_id|payment_id, key_secret) == signature
     public boolean verifyPaymentSignature(String orderId, String paymentId, String signature) {
         try {
             if (keySecret == null || keySecret.isEmpty()) {
-                logger.warn("Razorpay not configured. Simulating verification");
-                return true;
+                logger.warn("⚠️ Razorpay secret not configured");
+                return false;
             }
 
-            // Verify signature: HMAC-SHA256(orderId|paymentId, keySecret) == signature
+            // ✅ Official Razorpay verification format: orderId|paymentId
             String data = orderId + "|" + paymentId;
             String expectedSignature = generateHmacSha256(data, keySecret);
             
             boolean isValid = expectedSignature.equals(signature);
-            logger.info("Payment signature verification: {}", isValid);
+            
+            if (isValid) {
+                logger.info("✅ Payment signature verified for order: {} payment: {}", orderId, paymentId);
+            } else {
+                logger.error("❌ Invalid signature for order: {}. Received: {}, Expected: {}", 
+                    orderId, signature, expectedSignature);
+            }
+            
             return isValid;
 
         } catch (Exception e) {
-            logger.error("Error verifying payment signature: {}", e.getMessage());
+            logger.error("❌ Error verifying payment signature: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -86,10 +111,9 @@ public class RazorpayPaymentService {
         return keyId;
     }
 
-    public String getEncodedKeySecret() {
-        if (keySecret == null || keySecret.isEmpty()) {
-            return "";
-        }
-        return Base64.getEncoder().encodeToString(keySecret.getBytes());
+    // ✅ For frontend validation only (key secret is NEVER exposed)
+    public boolean isConfigured() {
+        return keyId != null && !keyId.isEmpty() && 
+               keySecret != null && !keySecret.isEmpty();
     }
 }

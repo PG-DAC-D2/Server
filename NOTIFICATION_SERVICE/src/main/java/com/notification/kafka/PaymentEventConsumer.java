@@ -35,12 +35,20 @@ public class PaymentEventConsumer {
         try {
             logger.info("Received payment event: {}", message);
 
-            PaymentEventMessage paymentEvent = objectMapper.readValue(message, PaymentEventMessage.class);
+            PaymentEventMessage paymentEvent;
+            try {
+                paymentEvent = objectMapper.readValue(message, PaymentEventMessage.class);
+            } catch (Exception deserializeErr) {
+                logger.error("❌ Deserialization failed for message: {}", message, deserializeErr);
+                return;
+            }
 
             if ("PAYMENT_SUCCESS".equals(paymentEvent.getEventType())) {
                 handlePaymentSuccess(paymentEvent);
             } else if ("PAYMENT_FAILED".equals(paymentEvent.getEventType())) {
                 handlePaymentFailure(paymentEvent);
+            } else {
+                logger.warn("Unknown event type: {}", paymentEvent.getEventType());
             }
 
         } catch (Exception e) {

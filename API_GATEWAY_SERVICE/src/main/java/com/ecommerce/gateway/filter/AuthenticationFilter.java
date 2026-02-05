@@ -97,15 +97,14 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             return false;
 
         if (path.startsWith("/api/orders") &&
-                !(normalizedRole.contains("CUSTOMER") || normalizedRole.contains("ADMIN")))
+                !(normalizedRole.contains("CUSTOMER") || normalizedRole.contains("MERCHANT") || normalizedRole.contains("ADMIN")))
             return false;
 
-        if (path.startsWith("/api/cart") &&
-                !(normalizedRole.contains("CUSTOMER") || normalizedRole.contains("ADMIN")))
+        if (path.startsWith("/api/cart") && !normalizedRole.contains("CUSTOMER"))
             return false;
 
         if (path.startsWith("/api/products") &&
-                !(normalizedRole.contains("MERCHANT") || normalizedRole.contains("ADMIN")))
+                !(normalizedRole.contains("CUSTOMER") || normalizedRole.contains("MERCHANT") || normalizedRole.contains("ADMIN")))
             return false;
 
         return true;

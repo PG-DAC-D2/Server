@@ -6,7 +6,7 @@ public class CartItem
     public Guid CartItemId { get; set; }
     public Guid CartId { get; set; }
 
-    [JsonIgnore]   // ✅ THIS FIXES THE CYCLE
+    [JsonIgnore]   // Prevent JSON serialization cycle for Cart reference
     public ShoppingCart? Cart { get; set; }
 
     public string ProductId { get; set; } = default!;

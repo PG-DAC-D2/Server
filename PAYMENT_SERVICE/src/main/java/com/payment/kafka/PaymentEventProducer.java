@@ -12,7 +12,7 @@ public class PaymentEventProducer {
     private static final Logger logger = LoggerFactory.getLogger(PaymentEventProducer.class);
     private static final String TOPIC = "payment-events";
 
-    // ✅ REQUIRED (not required=false) - Fails fast if Kafka misconfigures
+    // KafkaTemplate injection is required for publishing events
     @Autowired
     private KafkaTemplate<String, PaymentEventDTO> kafkaTemplate;
 

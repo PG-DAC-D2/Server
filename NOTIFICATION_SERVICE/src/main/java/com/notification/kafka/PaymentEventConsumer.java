@@ -39,7 +39,7 @@ public class PaymentEventConsumer {
             try {
                 paymentEvent = objectMapper.readValue(message, PaymentEventMessage.class);
             } catch (Exception deserializeErr) {
-                logger.error("❌ Deserialization failed for message: {}", message, deserializeErr);
+                logger.error("Deserialization failed for message: {}", message, deserializeErr);
                 return;
             }
 

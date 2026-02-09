@@ -29,7 +29,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
 
-            // ✅ 1. BYPASS OPTIONS REQUESTS (CORS preflight)
+            // Bypass OPTIONS requests (CORS preflight)
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
                 return chain.filter(exchange);
             }
@@ -37,7 +37,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             String path = exchange.getRequest().getPath().toString();
             String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
 
-            // ✅ 2. CHECK AUTHORIZATION HEADER
+            // Check Authorization header
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 logger.warn("Missing or invalid Authorization header for path: {}", path);
                 return unauthorized(exchange);
@@ -48,22 +48,22 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             try {
                 claims = jwtUtil.extractClaims(token);
-                logger.info("✅ JWT validated for path: {}", path);
+                logger.info("JWT validated for path: {}", path);
             } catch (Exception e) {
-                logger.error("❌ JWT validation failed: {}", e.getMessage());
+                logger.error("JWT validation failed: {}", e.getMessage());
                 return unauthorized(exchange);
             }
 
-            // ✅ 3. ROLE AUTHORIZATION CHECK
+            // Role-based authorization check
             String role = claims.get("role", String.class);
 
             if (!isAuthorized(path, role)) {
-                logger.warn("⚠️ Unauthorized access attempt: path={}, role={}", path, role);
+                logger.warn("Unauthorized access attempt: path={}, role={}", path, role);
                 exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                 return exchange.getResponse().setComplete();
             }
 
-            // ✅ 4. HEADER PROPAGATION (User Identity Forwarding)
+            // Header propagation (forward user identity)
             Object userIdObj = claims.get("user_id");
 
             if (userIdObj != null) {
@@ -79,16 +79,16 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                         .request(mutatedRequest)
                         .build();
 
-                logger.info("✅ Injected X-User-Id header: {}", userId);
+                logger.info("Injected X-User-Id header: {}", userId);
             } else {
-                logger.warn("⚠️ user_id not found in JWT claims");
+                logger.warn("user_id not found in JWT claims");
             }
 
             return chain.filter(exchange);
         };
     }
 
-    // ✅ ROLE BASED AUTHORIZATION
+    // Role-based authorization
     private boolean isAuthorized(String path, String role) {
 
         String normalizedRole = role != null ? role.toUpperCase() : "";
@@ -110,7 +110,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return true;
     }
 
-    // ✅ UNAUTHORIZED RESPONSE
+    // Unauthorized response
     private Mono<Void> unauthorized(ServerWebExchange exchange) {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         return exchange.getResponse().setComplete();

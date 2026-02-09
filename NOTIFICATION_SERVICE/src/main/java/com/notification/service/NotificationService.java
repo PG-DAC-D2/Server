@@ -51,7 +51,7 @@ public class NotificationService {
                     logger.error("Cannot send SMS: Phone number is missing");
                     sent = false;
                 } else {
-                    // ✅ FORMAT PHONE NUMBER FOR TWILIO (E.164 format required)
+                    // Ensure phone number is in E.164 format (required by Twilio)
                     String phoneNumber = request.getPhoneNumber().trim();
                     
                     // Remove any spaces, dashes, or parentheses
@@ -62,7 +62,7 @@ public class NotificationService {
                         phoneNumber = "+91" + phoneNumber;
                     }
                     
-                    logger.info("Formatted phone for SMS: {} → {}", request.getPhoneNumber(), phoneNumber);
+                    logger.info("Formatted phone for SMS: {} -> {}", request.getPhoneNumber(), phoneNumber);
                     sent = smsService.sendSms(phoneNumber, request.getMessage());
                 }
             }

@@ -32,8 +32,8 @@ razorpay:
   key-secret: 9hfqd1ZsRdEnxHajARvZ5d5z
 
 # Stripe Configuration (Optional)
-stripe:
-  api-key: ${STRIPE_API_KEY:sk_test_dummy}
+# stripe:
+#   api-key: ${STRIPE_API_KEY:sk_test_dummy}
 
 server:
   port: 8083

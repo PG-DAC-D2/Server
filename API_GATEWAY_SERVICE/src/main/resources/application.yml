@@ -12,7 +12,7 @@ spring:
   cloud:
     gateway:
 
-      # ✅ GLOBAL CORS CONFIGURATION (Fixed camelCase + exposed headers)
+      # GLOBAL CORS CONFIGURATION (Fixed camelCase + exposed headers)
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -37,7 +37,7 @@ spring:
 
       routes:
 
-        # ✅ USER SERVICE (Spring Boot)
+        # USER SERVICE (Spring Boot)
         - id: user-service
           uri: http://localhost:8081
           predicates:
@@ -62,7 +62,7 @@ spring:
             # Rewrite incoming gateway path to the service actuator path
             - RewritePath=/api/notifications/health,/actuator/health
 
-        # ✅ ORDER SERVICE (.NET)
+        # ORDER SERVICE (.NET)
         - id: order-service
           uri: http://localhost:5024
           predicates:
@@ -71,7 +71,7 @@ spring:
             # - AuthenticationFilter
             - StripPrefix=1
 
-        # ✅ PRODUCT SERVICE (Node.js)
+        # PRODUCT SERVICE (Node.js)
         - id: product-service
           uri: http://localhost:5000
           predicates:
@@ -80,7 +80,7 @@ spring:
             - StripPrefix=1
             # - AuthenticationFilter   # Uncomment if authentication required
 
-        # ✅ CART SERVICE (.NET)
+        # CART SERVICE (.NET)
         - id: cart-service
           uri: http://localhost:5296
           predicates:
@@ -89,7 +89,7 @@ spring:
             # - AuthenticationFilter
             - StripPrefix=1
 
-        # ✅ NOTIFICATION SERVICE (Spring Boot)
+        # NOTIFICATION SERVICE (Spring Boot)
         - id: notification-service
           uri: http://localhost:8084
           predicates:
@@ -98,7 +98,7 @@ spring:
             - AuthenticationFilter
             - StripPrefix=1
 
-        # ✅ PAYMENT SERVICE (Spring Boot)
+        # PAYMENT SERVICE (Spring Boot)
         - id: payment-service
           uri: http://localhost:8083
           predicates:
